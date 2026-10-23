@@ -159,6 +159,7 @@ func _setup_gameplay_controllers() -> void:
 			umpire.play_animation("umpire_four")
 		elif runs == 6:
 			umpire.play_animation("umpire_six")
+		hud.show_boundary_overlay(runs)
 		replay_sys.trigger_slow_motion_replay()
 	)
 

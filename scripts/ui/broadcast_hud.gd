@@ -163,30 +163,35 @@ func _build_ui_layout() -> void:
 	virtual_joystick.offset_bottom = -90
 	add_child(virtual_joystick)
 
-	# 6. BOTTOM RIGHT ACTION BUTTONS (LOFT, DRIVE, DEFEND)
-	var action_vbox := VBoxContainer.new()
-	action_vbox.anchor_left = 1.0
-	action_vbox.anchor_top = 1.0
-	action_vbox.anchor_right = 1.0
-	action_vbox.anchor_bottom = 1.0
-	action_vbox.offset_left = -170
-	action_vbox.offset_top = -270
-	action_vbox.offset_right = -24
-	action_vbox.offset_bottom = -90
-	action_vbox.add_theme_constant_override("separation", 10)
-	add_child(action_vbox)
+	# 6. BOTTOM RIGHT CIRCULAR ARCADE ACTION BUTTONS (WCC3 ERGONOMIC LAYOUT)
+	var action_cluster := Control.new()
+	action_cluster.anchor_left = 1.0
+	action_cluster.anchor_top = 1.0
+	action_cluster.anchor_right = 1.0
+	action_cluster.anchor_bottom = 1.0
+	action_cluster.offset_left = -230
+	action_cluster.offset_top = -250
+	action_cluster.offset_right = -15
+	action_cluster.offset_bottom = -85
+	add_child(action_cluster)
 
-	loft_btn = _create_action_button("🔥 LOFT", Color(0.9, 0.2, 0.15))
-	loft_btn.pressed.connect(func(): shot_button_pressed.emit("LOFT"))
-	action_vbox.add_child(loft_btn)
-
-	drive_btn = _create_action_button("⚡ DRIVE", Color(0.15, 0.65, 0.95))
+	# DRIVE (Primary central stroke)
+	drive_btn = _create_action_button("⚡\nDRIVE", Color(0.12, 0.72, 0.98), Vector2(76, 76))
+	drive_btn.position = Vector2(130, 75)
 	drive_btn.pressed.connect(func(): shot_button_pressed.emit("DRIVE"))
-	action_vbox.add_child(drive_btn)
+	action_cluster.add_child(drive_btn)
 
-	defend_btn = _create_action_button("🛡 DEFEND", Color(0.3, 0.75, 0.35))
+	# LOFT (Power stroke above DRIVE)
+	loft_btn = _create_action_button("🔥\nLOFT", Color(0.95, 0.22, 0.18), Vector2(76, 76))
+	loft_btn.position = Vector2(130, -10)
+	loft_btn.pressed.connect(func(): shot_button_pressed.emit("LOFT"))
+	action_cluster.add_child(loft_btn)
+
+	# DEFEND (Protective block to left)
+	defend_btn = _create_action_button("🛡\nBLOCK", Color(0.18, 0.82, 0.38), Vector2(66, 66))
+	defend_btn.position = Vector2(48, 80)
 	defend_btn.pressed.connect(func(): shot_button_pressed.emit("DEFEND"))
-	action_vbox.add_child(defend_btn)
+	action_cluster.add_child(defend_btn)
 
 	# 7. FULL-WIDTH BOTTOM TV BROADCAST SCORE BAR
 	var bot_bar := PanelContainer.new()
@@ -267,19 +272,32 @@ func _create_action_pill(title: String) -> Button:
 	btn.add_theme_stylebox_override("normal", style)
 	return btn
 
-func _create_action_button(title: String, col: Color) -> Button:
+func _create_action_button(title: String, col: Color, btn_size: Vector2 = Vector2(76, 76)) -> Button:
 	var btn := Button.new()
 	btn.text = title
-	btn.custom_minimum_size = Vector2(135, 48)
-	var style := StyleBoxFlat.new()
-	style.bg_color = col
-	style.corner_radius_top_left = 14
-	style.corner_radius_top_right = 14
-	style.corner_radius_bottom_left = 14
-	style.corner_radius_bottom_right = 14
-	style.shadow_color = Color(0, 0, 0, 0.4)
-	style.shadow_size = 4
-	btn.add_theme_stylebox_override("normal", style)
+	btn.custom_minimum_size = btn_size
+	btn.add_theme_font_size_override("font_size", 14)
+	
+	var r: int = int(btn_size.x * 0.5)
+	var style_n := StyleBoxFlat.new()
+	style_n.bg_color = Color(col.r * 0.75, col.g * 0.75, col.b * 0.75, 0.95)
+	style_n.border_width_left = 3
+	style_n.border_width_right = 3
+	style_n.border_width_top = 3
+	style_n.border_width_bottom = 3
+	style_n.border_color = Color(col.r * 1.35, col.g * 1.35, col.b * 1.35)
+	style_n.corner_radius_top_left = r
+	style_n.corner_radius_top_right = r
+	style_n.corner_radius_bottom_left = r
+	style_n.corner_radius_bottom_right = r
+	style_n.shadow_color = Color(col.r, col.g, col.b, 0.55)
+	style_n.shadow_size = 8
+	btn.add_theme_stylebox_override("normal", style_n)
+
+	var style_p := style_n.duplicate() as StyleBoxFlat
+	style_p.bg_color = col
+	style_p.shadow_size = 14
+	btn.add_theme_stylebox_override("pressed", style_p)
 	return btn
 
 func _build_drs_panel() -> void:
@@ -423,3 +441,15 @@ func _on_milestone(type: String, player: String) -> void:
 
 func _on_commentary_received(text: String, _tag: String) -> void:
 	commentary_label.text = text
+
+func show_boundary_overlay(runs: int) -> void:
+	var msg: String = "🏏 FOUR! 4️⃣ PIERCES THE GAP!" if runs == 4 else "🔥 MAXIMUM 6️⃣! INTO THE STANDS!"
+	var col: Color = Color(0.2, 0.85, 1.0) if runs == 4 else Color(1.0, 0.85, 0.15)
+	timing_feedback_label.text = msg
+	timing_feedback_label.add_theme_color_override("font_color", col)
+	timing_feedback_label.modulate.a = 1.0
+	var tween := create_tween()
+	tween.tween_property(timing_feedback_label, "scale", Vector2(1.2, 1.2), 0.15)
+	tween.tween_property(timing_feedback_label, "scale", Vector2(1.0, 1.0), 0.15)
+	tween.tween_interval(2.0)
+	tween.tween_property(timing_feedback_label, "modulate:a", 0.0, 0.5)
