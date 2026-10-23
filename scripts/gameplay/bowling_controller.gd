@@ -13,6 +13,10 @@ var current_step: BowlingStep = BowlingStep.AIM_TARGET
 var bowler: PlayerCharacter
 var ball: BallPhysics
 
+# 3D Visual Pitch Landing Marker (Real Cricket Style Guidance)
+var pitch_marker: MeshInstance3D
+var pitch_marker_mat: StandardMaterial3D
+
 # Marker & Delivery Parameters
 var target_marker_pos: Vector3 = Vector3(0.05, 0.015, 5.0) # Good length default
 var locked_swing_value: float = 0.0 # -1.0 to +1.0
@@ -38,12 +42,32 @@ func init(bowler_char: PlayerCharacter, ball_inst: BallPhysics) -> void:
 	ball.ball_boundary_scored.connect(_on_boundary_scored)
 	ball.ball_stopped.connect(_on_ball_stopped)
 
+	# Create 3D Glowing Pitch Landing Marker (RC24 Pitch Indicator)
+	pitch_marker = MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.38
+	cyl.bottom_radius = 0.38
+	cyl.height = 0.015
+	pitch_marker.mesh = cyl
+
+	pitch_marker_mat = StandardMaterial3D.new()
+	pitch_marker_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	pitch_marker_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	pitch_marker_mat.albedo_color = Color(0.15, 0.85, 0.25, 0.85)
+	pitch_marker.material_override = pitch_marker_mat
+	pitch_marker.visible = false
+	add_child(pitch_marker)
+
 func set_bowler_attributes(style: String, max_speed: float, ai_control: bool) -> void:
 	bowling_style = style
 	max_speed_kmh = max_speed
 	is_ai_controlled = ai_control
 
 func _process(delta: float) -> void:
+	if pitch_marker and pitch_marker.visible:
+		var pulse: float = 1.0 + 0.14 * sin(Time.get_ticks_msec() * 0.008)
+		pitch_marker.scale = Vector3(pulse, 1.0, pulse)
+
 	if is_ai_controlled and not GameManager.match_completed:
 		_process_ai_bowling_loop(delta)
 
@@ -77,7 +101,15 @@ func start_ai_delivery() -> void:
 	locked_swing_value = randf_range(-0.6, 0.6)
 	locked_pace_power = randf_range(0.85, 0.98) # Solid release
 	is_no_ball = randf() < 0.03
-	
+
+	# Display color-coded 3D pitch marker on turf
+	var zone: Dictionary = get_length_zone(target_marker_pos.z)
+	if pitch_marker and pitch_marker_mat:
+		pitch_marker_mat.albedo_color = Color(zone["color"].r, zone["color"].g, zone["color"].b, 0.85)
+		pitch_marker.global_position = Vector3(target_marker_pos.x, 0.02, target_marker_pos.z)
+		pitch_marker.scale = Vector3.ONE
+		pitch_marker.visible = true
+
 	_trigger_runup_sequence()
 
 func _trigger_runup_sequence() -> void:
@@ -103,6 +135,8 @@ func _on_runup_reached_crease() -> void:
 
 func _release_ball() -> void:
 	current_step = BowlingStep.IN_FLIGHT
+	if pitch_marker:
+		pitch_marker.visible = false
 	
 	var release_pos := Vector3(bowler.global_position.x + 0.15, 2.15, bowler.global_position.z + 0.4)
 	var speed_mps: float = (max_speed_kmh / 3.6) * locked_pace_power

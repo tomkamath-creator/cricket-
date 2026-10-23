@@ -56,9 +56,9 @@ func _build_ui() -> void:
 	vbox_modes.anchor_right = 0.5
 	vbox_modes.anchor_bottom = 0.5
 	vbox_modes.offset_left = -220
-	vbox_modes.offset_top = -180
+	vbox_modes.offset_top = -240
 	vbox_modes.offset_right = 220
-	vbox_modes.offset_bottom = 220
+	vbox_modes.offset_bottom = 250
 	vbox_modes.add_theme_constant_override("separation", 14)
 	add_child(vbox_modes)
 
@@ -81,6 +81,10 @@ func _build_ui() -> void:
 
 	vbox_modes.add_child(_create_mode_btn("👕 LOCKER ROOM & CUSTOMIZER", "360° Pedestal, player gear, build & kits", Color(0.45, 0.25, 0.75), func():
 		get_tree().change_scene_to_file("res://scenes/locker_room.tscn")
+	))
+
+	vbox_modes.add_child(_create_mode_btn("⬇ ULTRA HD EXPANSION PACK", "Download 1.2 GB console assets from autocrck repo", Color(0.12, 0.75, 0.45), func():
+		get_tree().change_scene_to_file("res://scenes/asset_downloader.tscn")
 	))
 
 func _create_mode_btn(title: String, desc: String, accent_color: Color, on_click: Callable) -> Button:

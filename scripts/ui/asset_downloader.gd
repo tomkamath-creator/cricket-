@@ -4,8 +4,8 @@ class_name AssetDownloader
 # AssetDownloader: Post-Install In-App Asset Delivery & 1.2 GB Ultra HD Console Expansion Downloader
 
 const PACK_SAVE_PATH: String = "user://console_assets_pack.pck"
-const DIRECT_DOWNLOAD_URL: String = "https://github.com/tomkamath-creator/cricket-/releases/download/v1.0.0-build.5/console_assets_pack.pck"
-const LATEST_DOWNLOAD_URL: String = "https://github.com/tomkamath-creator/cricket-/releases/latest/download/console_assets_pack.pck"
+const DIRECT_DOWNLOAD_URL: String = "https://raw.githubusercontent.com/tomkamath-creator/autocrck/main/console_assets_pack.pck"
+const BACKUP_DOWNLOAD_URL: String = "https://github.com/tomkamath-creator/autocrck/raw/main/console_assets_pack.pck"
 
 var http_request: HTTPRequest
 var progress_bar: ProgressBar

@@ -128,6 +128,9 @@ func _setup_gameplay_controllers() -> void:
 	bowling_ctrl = BowlingController.new()
 	add_child(bowling_ctrl)
 	bowling_ctrl.init(active_bowler, ball)
+	bowling_ctrl.delivery_commenced.connect(func():
+		replay_sys.reset_to_batting_cam()
+	)
 
 	# Fielding Controller
 	fielding_ctrl = FieldingController.new()
@@ -171,6 +174,8 @@ func _on_hud_shot_pressed(shot_type: String) -> void:
 
 func _on_shot_executed(timing: String, exit_speed_kmh: float, sector: String) -> void:
 	hud.show_timing_feedback(timing, exit_speed_kmh, sector)
+	if timing != "MISSED":
+		replay_sys.start_shot_follow_cam()
 
 func _on_hud_camera_pressed() -> void:
 	GameManager.cycle_camera()

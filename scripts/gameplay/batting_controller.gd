@@ -41,24 +41,19 @@ func execute_shot(shot_type: String, joystick_dir: Vector2) -> Dictionary:
 	var is_edge: bool = false
 	
 	var abs_ms: float = abs(timing_ms)
-	if abs_ms <= 26.0:
+	if abs_ms <= 35.0:
 		timing_rating = "PERFECT"
 		speed_multiplier = 1.0
-	elif abs_ms <= 62.0:
+	elif abs_ms <= 95.0:
 		timing_rating = "EARLY" if timing_ms > 0 else "LATE"
-		speed_multiplier = 0.85
-	elif abs_ms <= 115.0:
+		speed_multiplier = 0.88
+	elif abs_ms <= 165.0:
 		timing_rating = "TOO_EARLY" if timing_ms > 0 else "TOO_LATE"
-		speed_multiplier = 0.55
-		is_edge = randf() < 0.65
+		speed_multiplier = 0.58
+		is_edge = randf() < 0.55
 	else:
 		timing_rating = "MISSED"
 		speed_multiplier = 0.0
-	
-	if timing_rating == "MISSED":
-		batsman.play_animation("leave")
-		shot_executed.emit("MISSED", 0.0, "None")
-		return {"success": false, "timing": "MISSED"}
 	
 	# Compute shot trajectory & angle from joystick
 	var aim_angle: float = 0.0
@@ -116,6 +111,10 @@ func execute_shot(shot_type: String, joystick_dir: Vector2) -> Dictionary:
 	)
 	
 	batsman.play_animation(anim_name, 1.4)
+	if timing_rating == "MISSED":
+		shot_executed.emit("BEATEN", 0.0, sector_name)
+		return {"success": false, "timing": "MISSED"}
+
 	ball.hit_by_bat(exit_vel)
 	AudioManager.play_sfx("bat_crack", 1.0 if timing_rating == "PERFECT" else 0.85)
 	

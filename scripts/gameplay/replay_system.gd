@@ -15,10 +15,11 @@ var is_replaying: bool = false
 var replay_timer: float = 0.0
 var replay_duration: float = 3.2
 var replay_angle_idx: int = 0
+var is_following_shot: bool = false
 
 # Broadcast camera mode positions (relative to origin)
 const CAMERA_PRESETS: Dictionary = {
-	"BEHIND_BATSMAN": {"pos": Vector3(0.0, 1.85, 12.6), "target": Vector3(0.0, 1.1, -10.0)},
+	"BEHIND_BATSMAN": {"pos": Vector3(-0.95, 2.35, 12.85), "target": Vector3(0.08, 1.05, -2.0), "fov": 56.0},
 	"BOWLER_POV": {"pos": Vector3(0.35, 2.3, -16.0), "target": Vector3(0.0, 1.0, 9.05)},
 	"BROADCAST_SIDE": {"pos": Vector3(36.0, 14.0, 0.0), "target": Vector3(0.0, 1.0, 0.0)},
 	"BALL_TRACKING": {"pos": Vector3(0.0, 4.0, 6.0), "target": Vector3.ZERO},
@@ -54,12 +55,29 @@ func apply_camera_mode(mode: GameManager.CameraMode) -> void:
 		camera.look_at(p["target"], Vector3.UP)
 		camera.fov = 60.0
 
-func _update_live_camera(_delta: float) -> void:
+func start_shot_follow_cam() -> void:
+	if not is_replaying:
+		is_following_shot = true
+
+func reset_to_batting_cam() -> void:
+	is_following_shot = false
+	apply_camera_mode(GameManager.current_camera_mode)
+
+func _update_live_camera(delta: float) -> void:
 	if not camera or not ball:
 		return
 	
-	if GameManager.current_camera_mode == GameManager.CameraMode.BALL_TRACKING:
-		# Smooth ball tracking camera
+	if is_following_shot:
+		# Dynamic Broadcast Follow Cam (RC24 Style)
+		var target_cam_pos: Vector3 = ball.global_position + Vector3(0.0, 4.8, 8.2)
+		camera.global_position = camera.global_position.lerp(target_cam_pos, delta * 4.5)
+		camera.look_at(ball.global_position + Vector3(0.0, 0.4, 0.0), Vector3.UP)
+		camera.fov = lerp(camera.fov, 54.0, delta * 3.0)
+	elif GameManager.current_camera_mode == GameManager.CameraMode.BEHIND_BATSMAN:
+		var target_p: Vector3 = Vector3(-0.95, 2.35, 12.85)
+		camera.global_position = camera.global_position.lerp(target_p, delta * 6.0)
+		camera.look_at(Vector3(0.08, 1.05, -2.0), Vector3.UP)
+	elif GameManager.current_camera_mode == GameManager.CameraMode.BALL_TRACKING:
 		var target_cam_pos: Vector3 = ball.global_position + Vector3(0.0, 3.5, 5.5)
 		camera.global_position = camera.global_position.lerp(target_cam_pos, 0.12)
 		camera.look_at(ball.global_position, Vector3.UP)
